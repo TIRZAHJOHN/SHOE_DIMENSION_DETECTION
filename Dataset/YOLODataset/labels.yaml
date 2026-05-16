@@ -1,0 +1,14 @@
+class: shoe
+total_keypoints: 11
+keypoints:
+  - heel_top
+  - heel_mid
+  - heel_bottom
+  - instep_bottom
+  - instep_top
+  - toe_bottom
+  - toe_top
+  - curve_1
+  - curve_2
+  - curve_3
+  - curve_4

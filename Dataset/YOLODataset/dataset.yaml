@@ -1,0 +1,19 @@
+train: C:/Users/tirza/OneDrive/Desktop/SHOE/Dataset/YOLODataset/images/train
+val: C:/Users/tirza/OneDrive/Desktop/SHOE/Dataset/YOLODataset/images/val
+
+nc: 1
+names: ['shoe']
+
+kpt_shape: [11, 2]  # 11 keypoints (x, y)
+keypoints:
+  - heel_top
+  - heel_mid
+  - heel_bottom
+  - instep_bottom
+  - instep_top
+  - toe_bottom
+  - toe_top
+  - curve_1
+  - curve_2
+  - curve_3
+  - curve_4
