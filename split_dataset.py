@@ -7,41 +7,59 @@ source_dir = r"C:\Users\tirza\OneDrive\Desktop\SHOE\Dataset"
 output_dir = os.path.join(source_dir, "YOLODataset")
 split_ratio = 0.8  # 80% for training
 
-# Create required directories
-for sub in ['images/train', 'images/val', 'labels/train', 'labels/val']:
-    os.makedirs(os.path.join(output_dir, sub), exist_ok=True)
 
-# Get all image files (.jpeg)
-image_files = [f for f in os.listdir(source_dir) if f.endswith('.jpeg')]
-random.shuffle(image_files)
+def make_dirs(base):
+    """Create the train/val image and label directories under ``base``."""
+    for sub in ['images/train', 'images/val', 'labels/train', 'labels/val']:
+        os.makedirs(os.path.join(base, sub), exist_ok=True)
 
-split_index = int(len(image_files) * split_ratio)
-train_images = image_files[:split_index]
-val_images = image_files[split_index:]
 
-# Helper to move files
-def move_pair(image_name, target_split):
+def list_images(directory):
+    """Return the ``.jpeg`` files found directly under ``directory``."""
+    return [f for f in os.listdir(directory) if f.endswith('.jpeg')]
+
+
+def split_images(image_files, ratio=split_ratio):
+    """Split ``image_files`` into (train, val) lists using ``ratio``."""
+    split_index = int(len(image_files) * ratio)
+    return image_files[:split_index], image_files[split_index:]
+
+
+def move_pair(image_name, target_split, src=source_dir, out=output_dir):
     base = os.path.splitext(image_name)[0]
     json_name = base + ".json"
 
-    img_src = os.path.join(source_dir, image_name)
-    json_src = os.path.join(source_dir, json_name)
+    img_src = os.path.join(src, image_name)
+    json_src = os.path.join(src, json_name)
 
-    img_dst = os.path.join(output_dir, f"images/{target_split}", image_name)
-    json_dst = os.path.join(output_dir, f"labels/{target_split}", json_name)
+    img_dst = os.path.join(out, f"images/{target_split}", image_name)
+    json_dst = os.path.join(out, f"labels/{target_split}", json_name)
 
     if os.path.exists(img_src) and os.path.exists(json_src):
         shutil.copy(img_src, img_dst)
         shutil.copy(json_src, json_dst)
+        return True
     else:
         print(f"⚠️ Skipping {image_name}: missing JSON or image")
+        return False
 
-# Move training files
-for img in train_images:
-    move_pair(img, 'train')
 
-# Move validation files
-for img in val_images:
-    move_pair(img, 'val')
+def main(src=source_dir, out=output_dir, ratio=split_ratio):
+    make_dirs(out)
 
-print(f"✅ Split complete: {len(train_images)} train and {len(val_images)} val images")
+    image_files = list_images(src)
+    random.shuffle(image_files)
+
+    train_images, val_images = split_images(image_files, ratio)
+
+    for img in train_images:
+        move_pair(img, 'train', src, out)
+
+    for img in val_images:
+        move_pair(img, 'val', src, out)
+
+    print(f"✅ Split complete: {len(train_images)} train and {len(val_images)} val images")
+
+
+if __name__ == "__main__":
+    main()

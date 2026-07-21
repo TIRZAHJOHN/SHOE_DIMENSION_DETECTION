@@ -14,44 +14,70 @@ keypoints_needed = [
     'curve_1', 'curve_2', 'curve_3', 'curve_4'
 ]
 
+
 def distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
-print("\n📏 Shoe Measurements (in cm):\n")
 
-for filename in os.listdir(json_folder):
-    if filename.endswith(".json"):
-        filepath = os.path.join(json_folder, filename)
-        with open(filepath, 'r') as f:
-            data = json.load(f)
+def extract_points(data, keypoints=keypoints_needed):
+    """Return a mapping of keypoint label -> [x, y] from a LabelMe-style dict."""
+    points = {}
+    for shape in data.get('shapes', []):
+        label = shape['label'].strip()
+        if label in keypoints:
+            points[label] = shape['points'][0]
+    return points
 
-        points = {}
-        for shape in data.get('shapes', []):
-            label = shape['label'].strip()
-            if label in keypoints_needed:
-                points[label] = shape['points'][0]
 
-        missing = [k for k in keypoints_needed if k not in points]
-        if missing:
-            print(f"⚠️ Missing in {filename}: {missing}")
-            continue
+def missing_keypoints(points, keypoints=keypoints_needed):
+    """Return the list of required keypoints that are absent from ``points``."""
+    return [k for k in keypoints if k not in points]
 
-        # Compute distances
-        heel_height_px = distance(points['heel_top'], points['heel_bottom'])
-        instep_height_px = distance(points['instep_bottom'], points['instep_top'])
-        toe_length_px = distance(points['toe_bottom'], points['toe_top'])
-        curve_pts = [points['curve_1'], points['curve_2'], points['curve_3'], points['curve_4']]
-        curve_length_px = sum(distance(curve_pts[i], curve_pts[i + 1]) for i in range(3))
 
-        # Convert to cm
-        heel_height_cm = round(heel_height_px / px_per_cm, 2)
-        instep_height_cm = round(instep_height_px / px_per_cm, 2)
-        toe_length_cm = round(toe_length_px / px_per_cm, 2)
-        curve_length_cm = round(curve_length_px / px_per_cm, 2)
+def compute_measurements(points, scale=px_per_cm):
+    """Compute shoe measurements (in cm) from a keypoint mapping.
 
-        # Print result
-        print(f"🖼️ {filename.replace('.json', '')}")
-        print(f"  • Heel Height       : {heel_height_cm} cm")
-        print(f"  • Instep Height     : {instep_height_cm} cm")
-        print(f"  • Toe Length        : {toe_length_cm} cm")
-        print(f"  • Front Curve Length: {curve_length_cm} cm\n")
+    Raises KeyError if a required keypoint is missing.
+    """
+    heel_height_px = distance(points['heel_top'], points['heel_bottom'])
+    instep_height_px = distance(points['instep_bottom'], points['instep_top'])
+    toe_length_px = distance(points['toe_bottom'], points['toe_top'])
+    curve_pts = [points['curve_1'], points['curve_2'], points['curve_3'], points['curve_4']]
+    curve_length_px = sum(distance(curve_pts[i], curve_pts[i + 1]) for i in range(3))
+
+    return {
+        'heel_height': round(heel_height_px / scale, 2),
+        'instep_height': round(instep_height_px / scale, 2),
+        'toe_length': round(toe_length_px / scale, 2),
+        'curve_length': round(curve_length_px / scale, 2),
+    }
+
+
+def main(folder=json_folder):
+    print("\n📏 Shoe Measurements (in cm):\n")
+
+    for filename in os.listdir(folder):
+        if filename.endswith(".json"):
+            filepath = os.path.join(folder, filename)
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            points = extract_points(data)
+
+            missing = missing_keypoints(points)
+            if missing:
+                print(f"⚠️ Missing in {filename}: {missing}")
+                continue
+
+            m = compute_measurements(points)
+
+            # Print result
+            print(f"🖼️ {filename.replace('.json', '')}")
+            print(f"  • Heel Height       : {m['heel_height']} cm")
+            print(f"  • Instep Height     : {m['instep_height']} cm")
+            print(f"  • Toe Length        : {m['toe_length']} cm")
+            print(f"  • Front Curve Length: {m['curve_length']} cm\n")
+
+
+if __name__ == "__main__":
+    main()
