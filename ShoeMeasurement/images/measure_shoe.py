@@ -1,3 +1,4 @@
+import sys
 import cv2
 import math
 import numpy as np
@@ -56,8 +57,8 @@ def mouse_events(event, x, y, flags, param):
 # === MAIN ===
 img = cv2.imread(image_path)
 if img is None:
-    print("❌ Image not found.")
-    exit()
+    print(f"❌ Image not found: {image_path}", file=sys.stderr)
+    sys.exit(1)
 
 # Resize to smaller size
 w = int(img.shape[1] * scale_percent / 100)

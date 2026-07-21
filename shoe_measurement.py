@@ -1,38 +1,56 @@
+import sys
 from ultralytics import YOLO
 import cv2
 import numpy as np
 
+def log_error(message):
+    print(message, file=sys.stderr)
+
 # 1. Load your trained model (update with your best model path)
-model = YOLO(r"C:\Users\tirza\runs\pose\train\weights\best.pt")
+model_path = r"C:\Users\tirza\runs\pose\train\weights\best.pt"
+try:
+    model = YOLO(model_path)
+except Exception as e:
+    log_error(f"❌ Failed to load model from {model_path}: {e}")
+    sys.exit(1)
 
 # 2. Load a shoe image placed over A4 sheet
 img_path = r"C:\Users\tirza\OneDrive\Desktop\SHOE\Json dataset\image1.jpeg"
 img = cv2.imread(img_path)
+if img is None:
+    log_error(f"❌ Could not read image: {img_path}")
+    sys.exit(1)
 
 # 3. Run prediction
 results = model(img)
 
 # 4. Save and show prediction image
 annotated_img = results[0].plot()  # image with keypoints
-cv2.imwrite("output_with_keypoints.jpg", annotated_img)
+if not cv2.imwrite("output_with_keypoints.jpg", annotated_img):
+    log_error("❌ Failed to write output_with_keypoints.jpg")
+    sys.exit(1)
 cv2.imshow("Prediction", annotated_img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 # 5. Check if keypoints are detected
 if results[0].keypoints is None or len(results[0].keypoints.xy[0]) < 10:
-    print("❌ No keypoints detected. Please check the image or retrain the model.")
-    exit()
+    log_error("❌ No keypoints detected. Please check the image or retrain the model.")
+    sys.exit(1)
 
 # 6. Get keypoints
 keypoints = results[0].keypoints.xy[0].cpu().numpy()
 
 # 7. Assign keypoints in order (based on your training)
-(
-    heel_top, heel_bottom, heel_back, heel_front,
-    toe_start, toe_tip,
-    curve1, curve2, curve3, curve4
-) = keypoints
+try:
+    (
+        heel_top, heel_bottom, heel_back, heel_front,
+        toe_start, toe_tip,
+        curve1, curve2, curve3, curve4
+    ) = keypoints[:10]
+except ValueError as e:
+    log_error(f"❌ Unexpected number of keypoints ({len(keypoints)}): {e}")
+    sys.exit(1)
 
 # 8. Function to find distance between 2 points
 def euclidean(p1, p2):
