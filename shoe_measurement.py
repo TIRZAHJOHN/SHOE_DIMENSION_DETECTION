@@ -1,6 +1,7 @@
 from ultralytics import YOLO
 import cv2
-import numpy as np
+
+from shoe_utils import euclidean, polyline_length
 
 # 1. Load your trained model (update with your best model path)
 model = YOLO(r"C:\Users\tirza\runs\pose\train\weights\best.pt")
@@ -34,15 +35,11 @@ keypoints = results[0].keypoints.xy[0].cpu().numpy()
     curve1, curve2, curve3, curve4
 ) = keypoints
 
-# 8. Function to find distance between 2 points
-def euclidean(p1, p2):
-    return np.linalg.norm(p1 - p2)
-
 # 9. Measure in pixels
 heel_height_px = euclidean(heel_top, heel_bottom)
 shoe_length_px = euclidean(heel_back, toe_tip)
 curve_points = [curve1, curve2, curve3, curve4]
-curve_length_px = sum(euclidean(curve_points[i], curve_points[i + 1]) for i in range(len(curve_points) - 1))
+curve_length_px = polyline_length(curve_points)
 
 # 10. Convert pixel distances to cm (assuming A4 width = 21cm)
 a4_width_px = img.shape[1]
