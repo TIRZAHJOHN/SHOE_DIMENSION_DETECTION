@@ -1,3 +1,4 @@
+import sys
 import cv2
 import math
 
@@ -25,8 +26,8 @@ def click_event(event, x, y, flags, param):
 
 img = cv2.imread(image_path)
 if img is None:
-    print("❌ Image not found.")
-    exit()
+    print(f"❌ Image not found: {image_path}", file=sys.stderr)
+    sys.exit(1)
 
 # 💡 Resize to make it smaller on screen
 width = int(img.shape[1] * scale_percent / 100)
