@@ -1,7 +1,10 @@
 import os
-import json
+import sys
 import shutil
 import random
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from shoe_utils import KEYPOINTS_NEEDED, load_labelme_points
 
 # === PATHS ===
 json_folder = r"C:\Users\tirza\OneDrive\Desktop\SHOE\Dataset"
@@ -14,13 +17,6 @@ output_label_val = r"C:\Users\tirza\OneDrive\Desktop\SHOE\Dataset\YOLODataset\la
 for path in [output_image_train, output_label_train, output_image_val, output_label_val]:
     os.makedirs(path, exist_ok=True)
 
-# === 11 KEYPOINTS ===
-keypoints_needed = [
-    'heel_top', 'heel_mid', 'heel_bottom',
-    'instep_bottom', 'instep_top',
-    'toe_bottom', 'toe_top',
-    'curve_1', 'curve_2', 'curve_3', 'curve_4'
-]
 
 # === NORMALIZE FUNCTION ===
 def normalize(point, w, h):
@@ -33,8 +29,7 @@ split_idx = int(0.8 * len(json_files))
 
 for idx, json_file in enumerate(json_files):
     json_path = os.path.join(json_folder, json_file)
-    with open(json_path, 'r') as f:
-        data = json.load(f)
+    data, label_dict = load_labelme_points(json_path)
 
     image_name = data.get('imagePath')
     image_path = os.path.join(json_folder, image_name)
@@ -46,11 +41,10 @@ for idx, json_file in enumerate(json_files):
     width = data.get('imageWidth', 1)
     height = data.get('imageHeight', 1)
 
-    label_dict = {shape['label']: shape['points'][0] for shape in data.get('shapes', [])}
     kpts = []
 
     skip = False
-    for kp in keypoints_needed:
+    for kp in KEYPOINTS_NEEDED:
         if kp in label_dict:
             x, y = normalize(label_dict[kp], width, height)
             kpts.extend([x, y, 1])

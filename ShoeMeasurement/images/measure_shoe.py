@@ -1,6 +1,10 @@
+import os
+import sys
+
 import cv2
-import math
-import numpy as np
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from shoe_utils import euclidean, load_image, polyline_length
 
 # === CONFIG ===
 image_path = r"C:\Users\tirza\OneDrive\Desktop\SHOE\ShoeMeasurement\WhatsAppImage2025-07-01at12.37.42_a025ecbd.jpg"
@@ -11,18 +15,12 @@ scale_percent = 30  # Resize image to 30% of original
 line_points = []
 curve_points = []
 
-# === FUNCTIONS ===q
-def euclidean(pt1, pt2):
-    return math.sqrt((pt2[0] - pt1[0]) ** 2 + (pt2[1] - pt1[1]) ** 2)
-
+# === FUNCTIONS ===
 def distance_in_cm(pt1, pt2):
     return euclidean(pt1, pt2) / pixels_per_cm
 
 def curve_length(points):
-    total = 0
-    for i in range(len(points) - 1):
-        total += distance_in_cm(points[i], points[i + 1])
-    return total
+    return polyline_length(points) / pixels_per_cm
 
 def mouse_events(event, x, y, flags, param):
     global img_display, line_points, curve_points
@@ -54,15 +52,7 @@ def mouse_events(event, x, y, flags, param):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
 
 # === MAIN ===
-img = cv2.imread(image_path)
-if img is None:
-    print("❌ Image not found.")
-    exit()
-
-# Resize to smaller size
-w = int(img.shape[1] * scale_percent / 100)
-h = int(img.shape[0] * scale_percent / 100)
-img = cv2.resize(img, (w, h), interpolation=cv2.INTER_AREA)
+img = load_image(image_path, scale_percent)
 img_display = img.copy()
 
 cv2.namedWindow("Shoe Tool")

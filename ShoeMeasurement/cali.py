@@ -1,11 +1,13 @@
+import os
+import sys
+
 import cv2
-import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from shoe_utils import euclidean, load_image
 
 image_path = r"C:\Users\tirza\OneDrive\Desktop\SHOE\ShoeMeasurement\WhatsAppImage2025-07-01at12.37.42_a025ecbd.jpg"
 scale_percent = 30  # 🪄 Resize image to 30% of original size
-
-def euclidean(pt1, pt2):
-    return math.sqrt((pt2[0] - pt1[0]) ** 2 + (pt2[1] - pt1[1]) ** 2)
 
 points = []
 
@@ -23,15 +25,8 @@ def click_event(event, x, y, flags, param):
             print(f"📏 Pixel distance = {px_dist:.2f} → So pixels_per_cm = {pixels_per_cm:.2f}")
             cv2.imshow("Calibration", img_display)
 
-img = cv2.imread(image_path)
-if img is None:
-    print("❌ Image not found.")
-    exit()
-
-# 💡 Resize to make it smaller on screen
-width = int(img.shape[1] * scale_percent / 100)
-height = int(img.shape[0] * scale_percent / 100)
-img_display = cv2.resize(img, (width, height))
+# 💡 Load and resize to make it smaller on screen
+img_display = load_image(image_path, scale_percent)
 
 cv2.imshow("Calibration", img_display)
 cv2.setMouseCallback("Calibration", click_event)
